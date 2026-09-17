@@ -1058,11 +1058,6 @@ function wireModals(){
     const title = document.getElementById("evTitle").value.trim();
     const town = document.getElementById("evTown").value;
     if(!title || !town){ alert("Please add a title and town."); return; }
-    let photoUrl = null;
-    if(pendingPhoto){
-      try { photoUrl = await uploadMarketPhoto(pendingPhoto, m.id); }
-      catch(error){ alert("That photo could not be uploaded. Please try again."); console.error(error); return; }
-    }
     const row = {
       title, event_date: document.getElementById("evDate").value || futureDate(1),
       description: document.getElementById("evDesc").value.trim(),
