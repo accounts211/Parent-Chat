@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" autoAdjustsScrollViewInsets="NO">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21701"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="01J-lp-oVM">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController" title="Launch"/>
+                <view key="view" contentMode="scaleToFill" id="3" customClass="UIView">
+                    <rect key="frame" x="0" y="0" width="414" height="896"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Parent Chat" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO">
+                            <fontDescription key="fontDescription" type="system" pointSize="34" weight="semibold"/>
+                            <color key="textColor" red="0.200" green="0.180" blue="0.160" alpha="1"/>
+                        </label>
+                    </subviews>
+                </view>
+            </objects>
+        </scene>
+    </scenes>
+</document>

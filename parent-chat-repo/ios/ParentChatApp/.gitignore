@@ -1,0 +1,6 @@
+# Keep Xcode build folders out of source control
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+*.xcodeproj/project.xcworkspace/

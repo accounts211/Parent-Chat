@@ -1,0 +1,11 @@
+{
+  "name": "parent-chat-repo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Parent Chat static web app",
+  "homepage": "https://example.com",
+  "scripts": {
+    "start": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "ios": "echo 'Use Xcode on macOS to open the iOS wrapper under ios/ParentChatApp'"
+  }
+}

@@ -1,0 +1,5 @@
+// Placeholder Xcode project file for App wrapper structure
+// This file is intended to be used by a real Xcode project generation process on macOS.
+// It is not a valid full .xcodeproj without the rest of the project structure.
+
+// Add this generated content into an actual Xcode project file if you create an .xcodeproj.

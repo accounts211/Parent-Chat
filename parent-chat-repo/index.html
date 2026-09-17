@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Parent Chat</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8A9678">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Parent Chat">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --cream:#F5EFE3;
+    --card:#FBF8F2;
+    --taupe:#B6A585;
+    --taupe-light:#E4DBC9;
+    --charcoal:#332E27;
+    --charcoal-soft:#5C5548;
+    --muted:#8A8271;
+    --sage:#8A9678;
+    --sage-deep:#6C7A5C;
+    --sage-pale:#E7ECDF;
+    --ochre:#B9924F;
+    --ochre-light:#CDA968;
+    --ochre-pale:#EFE1C4;
+    --line: rgba(51,46,39,0.13);
+    --shadow: 0 8px 26px rgba(51,46,39,0.09);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--charcoal);
+    font-family:'Karla',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',serif;color:var(--charcoal);margin:0;font-weight:500;}
+  a{color:inherit;}
+  button{font-family:'Karla',sans-serif;cursor:pointer;}
+
+  #app{max-width:1180px;margin:0 auto;padding:0 20px 60px;}
+
+  header.top{display:flex;align-items:center;justify-content:space-between;padding:26px 4px 16px;flex-wrap:wrap;gap:14px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .mark{width:42px;height:42px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);flex:none;}
+  .brand h1{font-size:24px;font-weight:400;font-style:italic;letter-spacing:0.2px;}
+  .brand .tag{font-family:'Karla',sans-serif;font-weight:500;color:var(--muted);font-size:12.5px;letter-spacing:.03em;}
+
+  .headright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  .bellwrap{position:relative;display:none;align-items:center;}
+  .bellbtn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;box-shadow:var(--shadow);}
+  .bellcount{position:absolute;top:-3px;right:-3px;background:var(--ochre);color:#3a2e12;font-size:10px;font-weight:700;border-radius:50%;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--cream);}
+  .belldrop{display:none;position:absolute;top:48px;right:0;width:290px;max-height:340px;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);z-index:40;padding:12px;}
+  .belldrop.show{display:block;}
+  .belldrop h4{font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-family:'Karla',sans-serif;font-weight:700;}
+  .belldrop h4 button{background:none;border:none;color:var(--sage-deep);font-size:11px;font-weight:600;}
+  .notif-item{padding:9px 7px;border-bottom:1px solid var(--line);font-size:12.5px;border-radius:8px;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.unread{background:var(--sage-pale);}
+  .notif-item .when{color:var(--muted);font-size:10.5px;display:block;margin-top:2px;}
+
+  .memberchip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 16px;box-shadow:var(--shadow);}
+  .memberchip .val{font-size:13px;font-weight:600;color:var(--charcoal);}
+  .memberchip .premstar{color:var(--ochre);}
+  .memberchip button{background:var(--sage);color:#fff;border:none;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600;}
+  .memberchip button:hover{background:var(--sage-deep);}
+
+  .locchip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 16px;box-shadow:var(--shadow);}
+  .locchip .lbl{font-size:12px;color:var(--muted);}
+  .locchip .val{font-size:13px;font-weight:600;color:var(--charcoal);}
+  .locchip button{background:var(--sage);color:#fff;border:none;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600;}
+  .locchip button:hover{background:var(--sage-deep);}
+
+  nav.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-top:10px;overflow-x:auto;}
+  nav.tabs button{background:none;border:none;padding:13px 18px;font-size:14.5px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s;font-family:'Karla',sans-serif;}
+  nav.tabs button:hover{color:var(--charcoal);}
+  nav.tabs button.active{color:var(--charcoal);border-bottom-color:var(--sage);}
+
+  section.panel{display:none;padding-top:30px;}
+  section.panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .panelhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .panelhead h2{font-size:27px;font-weight:400;}
+  .panelhead p{margin:6px 0 0;color:var(--charcoal-soft);font-size:14px;max-width:520px;}
+  .headactions{display:flex;gap:10px;flex-wrap:wrap;}
+  .primary-btn{background:var(--sage);color:#fff;border:none;border-radius:999px;padding:12px 20px;font-weight:600;font-size:14px;box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:8px;}
+  .primary-btn:hover{background:var(--sage-deep);}
+  .primary-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .ghost-btn{background:transparent;border:1.5px solid var(--taupe);color:var(--charcoal);border-radius:999px;padding:10px 18px;font-weight:600;font-size:13.5px;}
+  .ghost-btn:hover{background:var(--taupe-light);}
+  .premium-btn{background:linear-gradient(120deg,var(--ochre),var(--ochre-light));color:#3a2e12;border:none;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:var(--shadow);}
+  .premium-btn:hover{filter:brightness(1.04);}
+
+  .dash-banner{border-radius:20px;padding:18px 22px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;box-shadow:var(--shadow);}
+  .dash-banner.free{background:var(--card);border:1px solid var(--line);}
+  .dash-banner.premium{background:linear-gradient(120deg,#3E3319,#5B4A22);color:var(--ochre-pale);}
+  .dash-banner.free h4{color:var(--charcoal);}
+  .dash-banner.premium h4{color:#fff;}
+  .dash-banner h4{font-family:'Fraunces',serif;font-size:17px;margin-bottom:4px;font-weight:500;}
+  .dash-banner p{margin:0;font-size:12.5px;max-width:520px;}
+  .dash-banner.free p{color:var(--charcoal-soft);}
+  .dash-banner.premium p{opacity:0.88;}
+
+  .pin-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 20px 20px;box-shadow:var(--shadow);transition:transform .15s ease;overflow:hidden;}
+  .pin-card::after{
+    content:"";position:absolute;top:14px;right:14px;width:30px;height:30px;opacity:.14;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M11 15c-1.5-3-1-6.5 1.5-8 .5 2 .5 3.5 0 5m10.5-5c2.5 1.5 3 5 1.5 8-.5-1.5-.5-3 0-5' stroke='%23332E27' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='17' cy='20' rx='8' ry='7.2' stroke='%23332E27' stroke-width='1.4' fill='none'/%3E%3C/svg%3E");
+    background-size:contain;background-repeat:no-repeat;pointer-events:none;
+  }
+  .pin-card:hover{transform:translateY(-3px);}
+  .pin-card.featured{border-color:var(--ochre);box-shadow:0 10px 26px rgba(185,146,79,0.28);}
+
+  .badge{display:inline-block;font-size:11px;letter-spacing:.03em;text-transform:uppercase;background:var(--sage-pale);color:var(--sage-deep);border-radius:999px;padding:4px 10px;font-weight:700;}
+  .badge.premium{background:var(--ochre-pale);color:#7A5B22;}
+  .badge.deal{background:var(--ochre-pale);color:#7A5B22;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}
+  .ev-date{font-size:11.5px;color:var(--sage-deep);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;}
+  .pin-card h3{font-size:18px;margin-bottom:8px;line-height:1.32;font-weight:500;padding-right:20px;}
+  .pin-card p.desc{font-size:13.5px;color:var(--charcoal-soft);line-height:1.55;margin:6px 0 14px;}
+  .deal-note{font-size:11.5px;color:#7A5B22;background:var(--ochre-pale);border-radius:10px;padding:7px 10px;margin:8px 0 0;}
+  .meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--taupe-light);}
+  .meta-row .town{font-size:12px;color:var(--sage-deep);font-weight:700;}
+  .meta-row .dist{font-size:11.5px;color:var(--muted);}
+
+  .empty{text-align:center;padding:56px 20px;color:var(--muted);background:var(--card);border:1px dashed var(--taupe);border-radius:20px;}
+  .empty .display{font-size:19px;margin-bottom:6px;color:var(--charcoal);font-weight:400;}
+
+  .catbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .catchip{border:1.5px solid var(--taupe);border-radius:999px;background:var(--card);color:var(--charcoal);padding:8px 15px;font-size:13px;font-weight:600;}
+  .catchip.on{background:var(--sage);color:#fff;border-color:var(--sage);}
+  .maplayout{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  @media (max-width:820px){.maplayout{grid-template-columns:1fr;}}
+  #map{height:520px;border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);}
+  .placelist{max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;}
+  .place-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;cursor:pointer;transition:.15s;}
+  .place-item:hover{border-color:var(--ochre);background:#fff;}
+  .place-item h4{margin:0 0 3px;font-size:14.5px;font-family:'Fraunces',serif;font-weight:500;color:var(--charcoal);display:flex;align-items:center;gap:6px;}
+  .place-item .town{font-size:12px;color:var(--muted);}
+
+  .thread{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-bottom:14px;box-shadow:var(--shadow);overflow:hidden;}
+  .thread-head{padding:18px 20px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;cursor:pointer;}
+  .thread-head h3{font-size:16.5px;margin-bottom:5px;font-weight:500;}
+  .thread-head .snippet{font-size:13.5px;color:var(--charcoal-soft);}
+  .thread-meta{font-size:11px;color:var(--sage-deep);font-weight:700;white-space:nowrap;text-align:right;}
+  .thread-body{border-top:1px solid var(--taupe-light);padding:16px 20px;display:none;background:var(--cream);}
+  .thread.open .thread-body{display:block;}
+  .reply{padding:10px 0;border-bottom:1px solid var(--line);}
+  .reply:last-child{border-bottom:none;}
+  .reply .who{font-weight:700;font-size:13px;color:var(--charcoal);}
+  .reply .when{font-size:10.5px;color:var(--muted);margin-left:6px;}
+  .reply p{margin:4px 0 0;font-size:13.5px;}
+  .reply-form{display:flex;gap:8px;margin-top:12px;}
+  .reply-form input{flex:1;}
+
+  .mk-card{position:relative;}
+  .mk-photo{height:135px;border-radius:14px;margin-bottom:12px;background:linear-gradient(135deg,var(--taupe-light),var(--cream));display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;}
+  .mk-photo img{width:100%;height:100%;object-fit:cover;}
+  .price{font-weight:700;font-size:16px;color:#7A5B22;background:var(--ochre-pale);display:inline-block;padding:3px 11px;border-radius:999px;}
+
+  .photo-input-wrap{display:flex;align-items:center;gap:12px;}
+  .photo-preview{width:64px;height:64px;border-radius:14px;background:var(--cream);border:1px dashed var(--taupe);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:22px;color:var(--muted);flex:none;}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .file-btn{border:1.5px solid var(--taupe);color:var(--charcoal);background:var(--card);border-radius:999px;padding:9px 14px;font-size:12.5px;font-weight:600;}
+  .file-btn input{display:none;}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(51,46,39,0.42);align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:22px;max-width:460px;width:100%;padding:28px 26px;box-shadow:0 20px 50px rgba(0,0,0,0.22);max-height:88vh;overflow-y:auto;position:relative;}
+  .modal h3{font-size:20px;margin-bottom:18px;font-weight:500;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--charcoal);margin-bottom:6px;}
+  .field input,.field textarea,.field select{width:100%;border:1.5px solid var(--taupe-light);border-radius:12px;padding:10px 13px;font-family:'Karla',sans-serif;font-size:13.5px;background:#fff;color:var(--charcoal);}
+  .field textarea{resize:vertical;min-height:70px;}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--sage);outline-offset:1px;border-color:var(--sage);}
+  .field.checkline{display:flex;align-items:center;gap:8px;}
+  .field.checkline label{margin:0;}
+  .field .hint{font-size:11.5px;color:var(--muted);margin-top:5px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .close-x{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;color:var(--muted);line-height:1;}
+
+  .banner{background:var(--card);border:1px solid var(--line);color:var(--charcoal);border-radius:18px;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px;box-shadow:var(--shadow);}
+  .banner p{margin:0;font-size:13.5px;color:var(--charcoal-soft);}
+  .banner select{background:#fff;color:var(--charcoal);border:1.5px solid var(--taupe-light);border-radius:10px;padding:8px 10px;font-size:13px;}
+
+  .auth-wrap{max-width:420px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:var(--shadow);}
+
+  .welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;margin-bottom:10px;}
+  @media (max-width:820px){.welcome-grid{grid-template-columns:1fr;gap:26px;}}
+  .welcome-grid .auth-wrap{margin:0;max-width:none;}
+  .welcome-intro .mark-lg{width:56px;height:56px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  .welcome-intro h2{font-size:30px;font-weight:400;font-style:italic;margin-bottom:14px;line-height:1.25;}
+  .welcome-intro .welcome-desc{font-size:15px;color:var(--charcoal-soft);max-width:420px;margin-bottom:22px;}
+  .welcome-features{list-style:none;padding:0;margin:0 0 22px;display:flex;flex-direction:column;gap:14px;}
+  .welcome-features li{display:flex;align-items:flex-start;gap:12px;font-size:13.5px;color:var(--charcoal);}
+  .welcome-features li svg{flex:none;width:20px;height:20px;margin-top:1px;}
+  .welcome-note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--taupe-light);padding-top:16px;max-width:420px;}
+  .signin-reason{background:var(--ochre-pale);color:#7A5B22;border-radius:12px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:16px;text-align:center;}
+
+  .intro-line{font-size:14.5px;color:var(--charcoal-soft);max-width:640px;margin:-6px 0 20px;}
+  .search-row{display:flex;gap:8px;margin-bottom:16px;}
+  .search-row input{flex:1;border:1.5px solid var(--taupe-light);border-radius:999px;padding:10px 16px;font-family:'Karla',sans-serif;font-size:13.5px;background:var(--card);color:var(--charcoal);}
+  .search-row input:focus{outline:2px solid var(--sage);outline-offset:1px;}
+  .locate-row{display:flex;gap:8px;align-items:center;margin-top:2px;margin-bottom:10px;}
+  .locate-btn{background:none;border:1.5px dashed var(--taupe);color:var(--sage-deep);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+  .locate-btn:hover{background:var(--sage-pale);}
+  .save-btn{position:absolute;top:14px;right:14px;background:var(--card);border:1px solid var(--line);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);z-index:2;}
+  .save-btn svg{width:16px;height:16px;}
+  .save-btn.on{background:var(--ochre-pale);}
+  .report-link{background:none;border:none;color:var(--muted);font-size:11px;font-weight:600;text-decoration:underline;padding:0;}
+  .report-link:hover{color:#8C4A2F;}
+  .safety-note{background:var(--sage-pale);color:var(--sage-deep);border-radius:12px;padding:10px 14px;font-size:12.5px;margin-bottom:18px;}
+  .footer-links{display:flex;justify-content:center;gap:16px;margin-top:6px;}
+  .footer-links button{background:none;border:none;color:var(--muted);font-size:11.5px;text-decoration:underline;}
+  .founding-note{font-size:11px;color:#7A5B22;background:var(--ochre-pale);display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;margin-bottom:8px;}
+  .saved-list{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+  .saved-row{display:flex;align-items:center;justify-content:space-between;background:var(--cream);border-radius:10px;padding:9px 12px;font-size:12.5px;}
+  .saved-row button{background:none;border:none;color:var(--muted);font-size:12px;}
+  .auth-toggle{display:flex;gap:6px;margin-bottom:20px;background:var(--cream);border-radius:999px;padding:4px;}
+  .auth-toggle button{flex:1;border:none;background:none;padding:9px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);}
+  .auth-toggle button.on{background:var(--sage);color:#fff;}
+  .authform{display:none;}
+  .authform.on{display:block;}
+  .msg-line{font-size:12.5px;padding:9px 12px;border-radius:12px;margin-bottom:12px;}
+  .msg-line.err{background:#F6E5E1;color:#8C4A2F;}
+  .msg-line.ok{background:var(--sage-pale);color:var(--sage-deep);}
+
+  .dashgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;}
+  @media (max-width:820px){.dashgrid{grid-template-columns:1fr;}}
+  .dashcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px;}
+  .dashcard h3{font-size:17px;margin-bottom:12px;font-weight:500;}
+  .planpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 13px;border-radius:999px;margin-bottom:12px;}
+  .planpill.free{background:var(--taupe-light);color:var(--charcoal);}
+  .planpill.premium{background:linear-gradient(135deg,var(--ochre-light),var(--ochre));color:#3a2e12;}
+  .perklist{list-style:none;padding:0;margin:10px 0;font-size:13px;}
+  .perklist li{padding:8px 0;border-bottom:1px solid var(--taupe-light);display:flex;gap:9px;}
+  .perklist li:last-child{border-bottom:none;}
+  .perklist li .ic{color:var(--ochre);}
+  .filterlist{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+  .filter-row{display:flex;align-items:center;justify-content:space-between;background:var(--cream);border-radius:12px;padding:9px 12px;font-size:12.5px;}
+  .filter-row button{background:none;border:none;color:#8C4A2F;font-size:13px;font-weight:700;}
+  .addfilter{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .addfilter input, .addfilter select{flex:1;min-width:120px;border:1.5px solid var(--taupe-light);border-radius:10px;padding:9px 11px;font-size:12.5px;}
+  .locked{position:relative;filter:blur(2.5px);opacity:0.5;pointer-events:none;user-select:none;}
+  .lockwrap{position:relative;}
+  .lockover{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px;}
+
+  footer.credit{text-align:center;padding:34px 0 6px;color:var(--muted);font-size:12px;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--taupe);border-radius:8px;}
+
+  /* ---------- Phone app shell (bottom tab bar) ---------- */
+  .bottomnav{display:none;}
+  .install-banner{display:none;}
+  @media (max-width:720px){
+    nav.tabs{display:none;}
+    #app{padding-bottom:96px;}
+    header.top{padding-top:calc(18px + env(safe-area-inset-top));}
+    .headright{width:100%;justify-content:space-between;}
+    .locchip{order:3;width:100%;justify-content:space-between;}
+
+    .bottomnav{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+      background:var(--card);border-top:1px solid var(--line);
+      padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 20px rgba(51,46,39,0.08);
+    }
+    .bottomnav button{
+      flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;
+      padding:6px 2px;color:var(--muted);font-size:10.5px;font-weight:600;font-family:'Karla',sans-serif;border-radius:14px;
+    }
+    .bottomnav button svg{width:22px;height:22px;}
+    .bottomnav button.active{color:var(--sage-deep);background:var(--sage-pale);}
+    .bottomnav button.active svg{stroke:var(--sage-deep);}
+
+    .install-banner{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      background:var(--card);border:1px solid var(--line);border-radius:16px;
+      padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);
+    }
+    .install-banner p{margin:0;font-size:12.5px;color:var(--charcoal-soft);}
+    .install-banner button{background:var(--sage);color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;white-space:nowrap;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">
+        <svg width="24" height="24" viewBox="0 0 34 34" fill="none">
+          <path d="M11 15c-1.5-3-1-6.5 1.5-8 .5 2 .5 3.5 0 5m10.5-5c2.5 1.5 3 5 1.5 8-.5-1.5-.5-3 0-5" stroke="#8A9678" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <ellipse cx="17" cy="20" rx="8" ry="7.2" stroke="#332E27" stroke-width="1.4" fill="none"/>
+          <circle cx="14.2" cy="19" r="0.9" fill="#332E27"/>
+          <circle cx="19.8" cy="19" r="0.9" fill="#332E27"/>
+          <path d="M15.5 22.3c.6.6 2.4.6 3 0" stroke="#332E27" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Parent Chat</h1>
+        <div class="tag">local days out, notices &amp; swaps</div>
+      </div>
+    </div>
+    <div class="headright">
+      <div class="bellwrap" id="bellWrap">
+        <button class="bellbtn" id="bellBtn">🔔<span class="bellcount" id="bellCount">0</span></button>
+        <div class="belldrop" id="bellDrop">
+          <h4>Notifications <button id="markAllRead">mark all read</button></h4>
+          <div id="notifList"></div>
+        </div>
+      </div>
+      <div class="memberchip" id="memberChip">
+        <span class="val" id="memberChipLabel">Sign in</span>
+        <button id="memberChipBtn">Go</button>
+      </div>
+      <div class="locchip">
+        <span class="lbl">Your area</span>
+        <span class="val" id="homeTownLabel">not set</span>
+        <button id="setAreaBtn">Set area</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="events" class="active">Events</button>
+    <button data-tab="map">Map</button>
+    <button data-tab="forum">Forum</button>
+    <button data-tab="market">Marketplace</button>
+    <button data-tab="members">Members</button>
+  </nav>
+
+  <div class="install-banner" id="installBanner">
+    <p>Add Parent Chat to your home screen for the full app experience.</p>
+    <button id="installBtn">Add app</button>
+  </div>
+
+  <div class="banner" id="setupBanner" style="display:none;border-color:#C77B4F;">
+    <p><strong>Setup needed:</strong> add your Supabase project URL and anon key at the top of the &lt;script&gt; tag before this app can save or load real data. See SETUP.md.</p>
+  </div>
+
+  <!-- One single smart banner — never stacks with itself -->
+  <div id="topBanner"></div>
+
+  <!-- EVENTS -->
+  <section class="panel active" id="panel-events">
+    <p class="intro-line">Local days out, a friendly forum, and second-hand kit — all within ten miles of home.</p>
+    <div class="panelhead">
+      <div>
+        <h2>What's on nearby</h2>
+        <p id="eventsSub">Showing events within 10 miles of your area.</p>
+      </div>
+      <button class="primary-btn" id="openEventForm">+ Post an event</button>
+    </div>
+    <div class="search-row"><input type="text" id="eventsSearch" placeholder="Search events…"></div>
+    <div class="grid" id="eventsGrid"></div>
+  </section>
+
+  <!-- MAP -->
+  <section class="panel" id="panel-map">
+    <div class="panelhead">
+      <div>
+        <h2>Places to go</h2>
+        <p>Farms, play barns, cafés &amp; beaches around Sussex &amp; Surrey — tap a pin or a card for details. <span class="badge deal">★ deal</span> marks a Premium member discount.</p>
+      </div>
+    </div>
+    <div class="catbar" id="catBar"></div>
+    <div class="maplayout">
+      <div id="map"></div>
+      <div class="placelist" id="placeList"></div>
+    </div>
+  </section>
+
+  <!-- FORUM -->
+  <section class="panel" id="panel-forum">
+    <div class="panelhead">
+      <div>
+        <h2>Community forum</h2>
+        <p id="forumSub">Threads from parents within 10 miles of your area.</p>
+      </div>
+      <button class="primary-btn" id="openThreadForm">+ Start a thread</button>
+    </div>
+    <div class="search-row"><input type="text" id="forumSearch" placeholder="Search threads…"></div>
+    <div id="threadList"></div>
+  </section>
+
+  <!-- MARKETPLACE -->
+  <section class="panel" id="panel-market">
+    <div class="panelhead">
+      <div>
+        <h2>Marketplace</h2>
+        <p id="marketSub">Second-hand kit for sale within 10 miles of your area.</p>
+      </div>
+      <div class="headactions">
+        <button class="ghost-btn" id="openSaveSearch">🔔 Save a search</button>
+        <button class="primary-btn" id="openListingForm">+ Sell an item</button>
+      </div>
+    </div>
+    <div class="safety-note">💛 Meeting up? Choose a public place, and take a look at the item before you pay.</div>
+    <div class="search-row"><input type="text" id="marketSearch" placeholder="Search listings…"></div>
+    <div class="grid" id="marketGrid"></div>
+  </section>
+
+  <!-- MEMBERS -->
+  <section class="panel" id="panel-members">
+    <div class="panelhead">
+      <div><h2>Members</h2><p>Join Parent Chat, and go Premium for extra perks.</p></div>
+    </div>
+    <div id="membersContent"></div>
+  </section>
+
+  <footer class="credit">
+    Parent Chat &mdash; made for parents in the Sussex &amp; Surrey area. Map data &copy; OpenStreetMap contributors.
+    <div class="footer-links">
+      <button id="openGuidelines">Community guidelines</button>
+    </div>
+  </footer>
+</div>
+
+
+<nav class="bottomnav" id="bottomNav">
+  <button data-tab="events" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8A8271" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+    Events
+  </button>
+  <button data-tab="map">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8A8271" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg>
+    Map
+  </button>
+  <button data-tab="forum">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8A8271" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 1 1-3.4-6.5L21 5l-1 3.6A7.9 7.9 0 0 1 21 12z"/></svg>
+    Forum
+  </button>
+  <button data-tab="market">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8A8271" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l1.5-3.5h9L18 7M4 7h16l-1.2 12.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 7z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg>
+    Market
+  </button>
+  <button data-tab="members">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#8A8271" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3.2-6.5 7-6.5s7 2.5 7 6.5"/></svg>
+    Members
+  </button>
+</nav>
+
+<!-- ===== MODALS ===== -->
+<div class="overlay" id="overlayArea">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Set your area</h3>
+    <div class="locate-row"><button class="locate-btn" id="locateBtnModal">📍 Use my location</button></div>
+    <div id="locateMsgModal" style="font-size:11.5px;color:var(--muted);margin-bottom:10px;"></div>
+    <div class="field"><label>Nearest town / village</label><select id="areaSelectModal"></select></div>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="saveAreaBtn">Save</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayEvent">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Post an event</h3>
+    <div class="field"><label>Title</label><input id="evTitle" placeholder="e.g. Toddler sing &amp; sign session"></div>
+    <div class="field"><label>Date</label><input id="evDate" type="date"></div>
+    <div class="field"><label>Description</label><textarea id="evDesc" placeholder="What's happening, ages, cost..."></textarea></div>
+    <div class="field"><label>Town / village</label><select id="evTown"></select></div>
+    <div class="field"><label>Your name</label><input id="evAuthor" placeholder="e.g. Sarah"></div>
+    <div class="field"><label>Member perk (optional)</label><input id="evDiscount" placeholder="e.g. 10% off for Premium members"></div>
+    <div class="field checkline">
+      <input type="checkbox" id="evFeatured">
+      <label for="evFeatured">Feature this at the top of Events (Premium)</label>
+    </div>
+    <div class="field hint" id="evFeaturedHint"></div>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="submitEvent">Post event</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayThread">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Start a thread</h3>
+    <div class="field"><label>Title</label><input id="thTitle" placeholder="e.g. Any good weaning classes?"></div>
+    <div class="field"><label>Message</label><textarea id="thBody" placeholder="Share your question or news..."></textarea></div>
+    <div class="field"><label>Town / village</label><select id="thTown"></select></div>
+    <div class="field"><label>Your name</label><input id="thAuthor" placeholder="e.g. Priya"></div>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="submitThread">Post thread</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayListing">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Sell an item</h3>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-input-wrap">
+        <div class="photo-preview" id="mkPhotoPreview">📷</div>
+        <label class="file-btn">Take / choose photo<input type="file" accept="image/*" capture="environment" id="mkPhotoInput"></label>
+      </div>
+    </div>
+    <div class="field"><label>Item</label><input id="mkTitle" placeholder="e.g. Bugaboo Bee pushchair"></div>
+    <div class="field"><label>Category</label>
+      <select id="mkCategory">
+        <option>Pushchairs &amp; Travel</option><option>Clothing</option><option>Toys &amp; Games</option>
+        <option>Nursery Furniture</option><option>Feeding</option><option>Books</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Price (£)</label><input id="mkPrice" type="number" min="0" placeholder="45"></div>
+    <div class="field"><label>Condition</label>
+      <select id="mkCondition"><option>New with tags</option><option>Excellent</option><option>Good</option><option>Well loved</option></select>
+    </div>
+    <div class="field"><label>Description</label><textarea id="mkDesc" placeholder="Any details buyers should know..."></textarea></div>
+    <div class="field"><label>Town / village</label><select id="mkTown"></select></div>
+    <div class="field"><label>Your name</label><input id="mkAuthor" placeholder="e.g. Tom"></div>
+    <div class="field"><label>Member perk (optional)</label><input id="mkDiscount" placeholder="e.g. £5 off for Premium members"></div>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="submitListing">List item</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlaySaveSearch">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Save a marketplace search</h3>
+    <div id="saveSearchBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayUpgrade">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <span class="founding-note">Founding member offer — first month free</span>
+    <h3>Upgrade to Premium</h3>
+    <ul class="perklist">
+      <li><span class="ic">★</span> Save marketplace searches &amp; get notified of new matches</li>
+      <li><span class="ic">★</span> Discounts at selected farms, events &amp; places</li>
+      <li><span class="ic">★</span> Got a business? Feature it at the top of Events</li>
+    </ul>
+    <p style="font-size:13px;color:var(--charcoal-soft);">Free for your first month, then £9.99/month. Cancel any time. This is a demo — no real card details are taken or stored here.</p>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="premium-btn" id="confirmUpgrade">Start free month</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayReport">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Report this</h3>
+    <div class="field"><label>Reason</label>
+      <select id="repReason"><option>Spam or advertising</option><option>Inappropriate content</option><option>Scam or fraud</option><option>Something else</option></select>
+    </div>
+    <div class="field"><label>Details (optional)</label><textarea id="repDetails" placeholder="Anything that would help us look into this..."></textarea></div>
+    <div id="repMsg"></div>
+    <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="submitReport">Send report</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlayGuidelines">
+  <div class="modal">
+    <button class="close-x" data-close>&times;</button>
+    <h3>Community guidelines</h3>
+    <ul class="perklist">
+      <li><span class="ic">·</span> Be kind — you're talking to a neighbour, not a stranger on the internet.</li>
+      <li><span class="ic">·</span> No spam, scams, or unrelated advertising in the forum or events.</li>
+      <li><span class="ic">·</span> Keep marketplace listings honest — accurate photos and descriptions.</li>
+      <li><span class="ic">·</span> Meet in public places for marketplace exchanges, and trust your instincts.</li>
+      <li><span class="ic">·</span> Use the Report button on anything that breaks these — we look at every report.</li>
+    </ul>
+    <div class="modal-actions"><button class="primary-btn" data-close>Got it</button></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   PARENT CHAT — data, rendering, and the Supabase backend
+   ============================================================ */
+
+// ---------- 1) FILL THESE IN ----------
+// Supabase → Project Settings → API → "Project URL" and "anon public" key.
+// These are safe to expose in frontend code (that's what the anon key is
+// for) — access is controlled by the Row Level Security policies in
+// schema.sql instead.
+const SUPABASE_URL = "https://vhecnrfblhooigqbkizu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_tpPgEzNnOnG8LzId8RWn7Q_Dt-4Bcsw";
+
+// Stripe Dashboard → Payment Links → create a £9.99/month "Parent Chat
+// Premium" product → paste the link here.
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_9B69AV3u5arA8s23FV3cc00";
+
+const CONFIGURED = !SUPABASE_URL.startsWith("YOUR_") && !SUPABASE_ANON_KEY.startsWith("YOUR_");
+const sb = CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// ---------- Town coordinates (approx centres, Sussex/Surrey/Kent) ----------
+const townCoords = {
+  "Hurstpierpoint":[50.9310,-0.1858],"Billingshurst":[51.0210,-0.4460],"Whitesmith":[50.9020,0.1290],
+  "Eastbourne":[50.7684,0.2901],"Leatherhead":[51.2977,-0.3280],"Godstone":[51.2409,-0.0637],
+  "Nutfield":[51.2306,-0.1300],"Ditchling":[50.9107,-0.1128],"Woking":[51.3407,-0.6035],
+  "Furners Green":[51.0193,0.0357],"Firle":[50.8474,0.0763],"Hailsham":[50.8628,0.2669],
+  "Alfriston":[50.8058,0.1618],"Epsom":[51.3339,-0.2686],"Medway":[51.3990,0.4680],
+  "Chessington":[51.3592,-0.2985],"Romsey":[50.9670,-1.5480],"Windsor":[51.4839,-0.6044],
+  "Crawley":[51.1092,-0.1872],"Lingfield":[51.1801,-0.0104],"Worthing":[50.8114,-0.3729],
+  "Chichester":[50.8365,-0.7791],"Ashford":[51.1465,0.8726],"Arundel":[50.8546,-0.5559],
+  "Bracknell":[51.4136,-0.7500],"Henfield":[50.9280,-0.2680],"Ringmer":[50.8850,0.0700],
+  "Brighton":[50.8225,-0.1372],"Hastings":[50.8552,0.5730],"Littlehampton":[50.8080,-0.5420],
+  "Hayling Island":[50.7840,-0.9800],"Burgess Hill":[50.9550,-0.1310],"Haywards Heath":[51.0016,-0.1030],
+  "East Grinstead":[51.1280,-0.0090],"Handcross":[51.0330,-0.2270],"Ardingly":[51.0570,-0.0940],
+  "Uckfield":[50.9700,0.0900],"Bodiam":[51.0010,0.5460],"Hove":[50.8288,-0.1663],
+  "Southwater":[51.0290,-0.3660],"Chailey":[50.9520,-0.0850],"Amberley":[50.9020,-0.5440],
+  "Newhaven":[50.7880,0.0550],"Cowfold":[50.9750,-0.2820],"Horsham":[51.0630,-0.3270],
+  "Lancing":[50.8270,-0.3230],"Horley":[51.1730,-0.1670],"Angmering":[50.8180,-0.4780],
+  "Shoreham-by-Sea":[50.8350,-0.2740],"Lewes":[50.8712,0.0098]
+};
+const townNames = Object.keys(townCoords).sort();
+
+function jitter(latlng, i){
+  const dx = ((i*37)%9-4)*0.0035;
+  const dy = ((i*53)%9-4)*0.0035;
+  return [latlng[0]+dx, latlng[1]+dy];
+}
+function haversineMiles(lat1,lon1,lat2,lon2){
+  const R=3958.8, toRad=x=>x*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+const rawPlaces = [
+  ["Washbrooks","Hurstpierpoint","outdoor"],["Fishers Farm","Billingshurst","outdoor"],
+  ["Blackberry Farm","Whitesmith","outdoor"],["Sharnfold Farm","Eastbourne","outdoor"],
+  ["Bocketts Farm","Leatherhead","outdoor"],["Godstone Farm","Godstone","outdoor"],
+  ["Priory Farm","Nutfield","outdoor"],["Oaks Poultry Farm","Ditchling","outdoor"],
+  ["Chobham Adventure Farm","Woking","outdoor"],["Latchetts Farm","Furners Green","outdoor"],
+  ["Middle Farm","Firle","outdoor"],["Knockhatch","Hailsham","outdoor"],
+  ["Drusillas","Alfriston","outdoor"],["Hobbledown","Epsom","outdoor"],
+  ["Diggerland","Medway","outdoor"],["Chessington World of Adventures","Chessington","outdoor"],
+  ["Paultons Park","Romsey","outdoor"],["Legoland Windsor","Windsor","outdoor"],
+  ["Tilgate Park","Crawley","outdoor"],["British Wildlife Centre","Lingfield","outdoor"],
+  ["Ferring Country Centre","Worthing","outdoor"],["Aldingbourne Country Centre","Chichester","outdoor"],
+  ["Rare Breeds Centre","Ashford","outdoor"],["WWT Arundel","Arundel","outdoor"],
+  ["The Look Out Discovery Centre","Bracknell","outdoor"],["Stoneywish Nature Reserve","Ditchling","outdoor"],
+  ["Woods Mill Nature Reserve","Henfield","outdoor"],["Raystede","Ringmer","outdoor"],
+  ["Butterfly Garden","Ditchling","outdoor"],["Sea Life Centre","Brighton","outdoor"],
+  ["Blue Reef Aquarium","Hastings","outdoor"],["Harbour Park Amusements","Littlehampton","outdoor"],
+  ["Funland","Hayling Island","outdoor"],["Brighton i360","Brighton","outdoor"],
+  ["Brighton Pier","Brighton","outdoor"],["East Cliff Funicular Railway","Hastings","outdoor"],
+  ["Smugglers Caves","Hastings","outdoor"],["Weald & Downland Living Museum","Chichester","outdoor"],
+  ["The Triangle","Burgess Hill","outdoor"],["The Dolphin Leisure Centre","Haywards Heath","outdoor"],
+  ["Kings Centre","East Grinstead","outdoor"],["National Trust: Nymans","Handcross","outdoor"],
+  ["National Trust: Wakehurst","Ardingly","outdoor"],["National Trust: Sheffield Park","Uckfield","outdoor"],
+  ["National Trust: Bodiam Castle","Bodiam","outdoor"],["National Trust: Devil's Dyke","Brighton","outdoor"],
+  ["Hove Lagoon","Hove","outdoor"],["Hove Park","Hove","outdoor"],
+  ["Preston Park","Brighton","outdoor"],["Carden Park","Brighton","outdoor"],
+  ["Southwater Country Park","Southwater","outdoor"],["Buchan Park","Crawley","outdoor"],
+  ["Ditchling Common","Ditchling","outdoor"],["Chailey Common","Chailey","outdoor"],
+  ["Beech Hurst Gardens","Haywards Heath","outdoor"],["Arundel Castle","Arundel","outdoor"],
+  ["Highdown Gardens","Worthing","outdoor"],["Amberley Museum","Amberley","outdoor"],
+  ["West Dean Gardens","Chichester","outdoor"],["Southdowns Nurseries","Haywards Heath","outdoor"],
+  ["Notcutts Garden Centre","Crawley","outdoor"],["Swains Farm Shop","Haywards Heath","outdoor"],
+  ["Garden Thyme","Haywards Heath","outdoor"],["Camelia Botnar","Cowfold","outdoor"],
+  ["Paradise Park","Newhaven","outdoor"],
+  ["Little Town","Horsham","indoor"],["Monkey Bizness","Lewes","indoor"],
+  ["Monkey Bizz","Ashford","indoor"],["Sharkys","Henfield","indoor"],
+  ["Treasure Chest","Crawley","indoor"],["Space Station","Lancing","indoor"],
+  ["Barneys","Uckfield","indoor"],["Doves Play Barn","Furners Green","indoor"],
+  ["Doves Inflatables","Furners Green","indoor"],["Jumpin","Burgess Hill","indoor"],
+  ["Let's Explore","Horley","indoor"],["Out Of Bounds","Angmering","indoor"],
+  ["Little Lewes","Lewes","cafe"],["Activity Cafe","Burgess Hill","cafe"],
+  ["Playcafe","Brighton","cafe"],["Cjs Play Cafe","Crawley","cafe"],
+  ["Lancing Beach","Lancing","beach"],["Hayling Island Beach","Hayling Island","beach"],
+  ["Shoreham Beach","Shoreham-by-Sea","beach"]
+];
+const places = rawPlaces.map((p,i)=>{
+  const base = townCoords[p[1]] || [50.95,-0.15];
+  const [lat,lng] = jitter(base,i);
+  return {name:p[0], town:p[1], cat:p[2], lat, lng};
+});
+const catInfo = {
+  outdoor:{label:"Outdoor & Farms", color:"#6C7A5C"},
+  indoor:{label:"Soft Play & Indoor", color:"#B9924F"},
+  cafe:{label:"Cafés", color:"#8C6A44"},
+  beach:{label:"Beaches", color:"#6E8496"}
+};
+const dealPlaces = {
+  "Drusillas":"10% off day tickets for Premium members",
+  "Fishers Farm":"Kids eat free with a paying adult for Premium members",
+  "Knockhatch":"£2 off entry for Premium members",
+  "Paradise Park":"Free parking upgrade for Premium members"
+};
+
+// ---------- Local (per-device) preferences ----------
+function loadPersonal(key, fallback){
+  try{ const v = localStorage.getItem("pc:"+key); return v===null ? fallback : JSON.parse(v); }
+  catch(e){ return fallback; }
+}
+function savePersonal(key, value){
+  try{ localStorage.setItem("pc:"+key, JSON.stringify(value)); }catch(e){ console.error(e); }
+}
+
+const SESSION_MAX_MS = 60 * 60 * 1000;
+let sessionTimer = null;
+function startSessionTimer(session){
+  if(sessionTimer) clearTimeout(sessionTimer);
+  const startedAt = loadPersonal("session-started-at", null) || Date.now();
+  savePersonal("session-started-at", startedAt);
+  const remaining = Math.max(0, SESSION_MAX_MS - (Date.now() - startedAt));
+  sessionTimer = setTimeout(async ()=>{
+    await sb.auth.signOut();
+    savePersonal("session-started-at", null);
+  }, remaining);
+}
+function captureSignupFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const town = params.get("town");
+  const name = params.get("name");
+  if(town || name) savePersonal("pending-signup", {name:name||"", town:town||""});
+  if(town || name) history.replaceState({}, "", window.location.pathname);
+}
+
+// ---------- DB <-> app-shape mapping ----------
+const mapEventFromDb = r => ({ id:r.id, title:r.title, date:r.event_date, desc:r.description||"", town:r.town, author:r.author||"A parent", featured:!!r.featured, discountNote:r.discount_note||"" });
+const mapThreadFromDb = r => ({ id:r.id, title:r.title, body:r.body||"", town:r.town, author:r.author||"A parent", ts:new Date(r.created_at).getTime(), replies:[] });
+const mapReplyFromDb = r => ({ who:r.who||"A parent", body:r.body, ts:new Date(r.created_at).getTime() });
+const mapListingFromDb = r => ({ id:r.id, title:r.title, price:Number(r.price)||0, cond:r.cond, category:r.category, desc:r.description||"", town:r.town, author:r.author||"A parent", postedBy:r.posted_by, ts:new Date(r.created_at).getTime(), photo:r.photo||null, sold:!!r.sold, soldAt:r.sold_at?new Date(r.sold_at).getTime():null, discountNote:r.discount_note||"" });
+
+function futureDate(days){ return new Date(Date.now()+days*86400000).toISOString().slice(0,10); }
+
+// state.profile / state.email / state.savedFilters / state.notifications
+// describe ONLY the signed-in visitor — that's all the anon key can read
+// for anyone else now. state.adminReport is loaded separately, only for
+// admins, from the public-safe columns everyone can see.
+let state = {
+  homeTown:null, events:[], forum:[], market:[],
+  session:null, profile:null, email:null, savedFilters:[], notifications:[],
+  adminReport:null, authStage:"idle", authMode:"signin", pendingEmail:null, signInReason:null,
+  activeCat:"all", searchEvents:"", searchForum:"", searchMarket:"", savedRefs:[], communityError:false
+};
+
+// ---------- Init ----------
+async function init(){
+  populateTownSelects();
+  captureSignupFromUrl();
+  state.homeTown = loadPersonal("home-town", null);
+  updateHomeTownUI();
+  wireNav(); wireModals(); wireHeader(); wireSearch();
+
+  if(!CONFIGURED){
+    document.getElementById("setupBanner").style.display = "flex";
+    return;
+  }
+
+  sb.auth.onAuthStateChange(async (authEvent, session)=>{
+    state.session = session;
+    if(session){ startSessionTimer(session); await loadMyProfile(); if(authEvent === "PASSWORD_RECOVERY") state.authStage = "resetting"; }
+    else {
+      if(sessionTimer) clearTimeout(sessionTimer);
+      savePersonal("session-started-at", null);
+      state.profile=null; state.email=null; state.savedFilters=[]; state.notifications=[]; state.adminReport=null;
+    }
+    renderAll();
+  });
+
+  const { data:{session} } = await sb.auth.getSession();
+  state.session = session;
+  if(session){ startSessionTimer(session); await loadMyProfile(); }
+
+  await loadCommunityContent();
+  renderAll();
+  buildMap(); buildCatBar(); renderPlaceList();
+  handleStripeReturn();
+}
+
+async function loadCommunityContent(){
+  const results = await Promise.all([
+    sb.from("events").select("*").order("created_at", {ascending:false}).limit(100),
+    sb.from("forum_threads").select("*").order("created_at", {ascending:false}).limit(100),
+    sb.from("forum_replies").select("*").order("created_at", {ascending:true}).limit(500),
+    sb.from("market_listings").select("*").order("created_at", {ascending:false}).limit(100)
+  ]);
+  if(results.some(result=>result.error)){
+    state.communityError = true;
+    console.error("Community content failed to load", results.map(result=>result.error).filter(Boolean));
+    return;
+  }
+  state.communityError = false;
+  const [{data:eventsRows}, {data:threadRows}, {data:replyRows}, {data:listingRows}] = results;
+  state.events = (eventsRows||[]).map(mapEventFromDb);
+  state.forum = (threadRows||[]).map(mapThreadFromDb);
+  (replyRows||[]).forEach(r=>{
+    const t = state.forum.find(x=>x.id===r.thread_id);
+    if(t) t.replies.push(mapReplyFromDb(r));
+  });
+  state.market = (listingRows||[]).map(mapListingFromDb);
+}
+
+async function loadMyProfile(){
+  const uid = state.session.user.id;
+  const {data} = await sb.from("members").select("id,name,town,premium,premium_since,joined").eq("id", uid).maybeSingle();
+  if(data){
+    state.profile = {id:data.id, name:data.name, town:data.town, premium:!!data.premium, premiumSince:data.premium_since?new Date(data.premium_since).getTime():null, joined:new Date(data.joined).getTime()};
+    state.email = state.session.user.email;
+    state.homeTown = data.town;
+    savePersonal("home-town", data.town);
+    updateHomeTownUI();
+    state.authStage = "idle";
+    await loadMyExtras();
+    await loadAdminReport();
+  } else {
+    // Authenticated via the magic link, but no profile row yet.
+    const pending = loadPersonal("pending-signup", null);
+    if(state.session.user.user_metadata?.name && state.session.user.user_metadata?.town){
+      await completeProfileWith(state.session.user.user_metadata.name, state.session.user.user_metadata.town);
+    } else if(pending && pending.name && pending.town){
+      await completeProfileWith(pending.name, pending.town);
+    } else {
+      state.profile = null;
+      state.authStage = "completing";
+    }
+  }
+}
+async function loadMyExtras(){
+  const uid = state.profile.id;
+  const [{data:filters},{data:notes},{data:saved}] = await Promise.all([
+    sb.from("saved_filters").select("*").eq("member_id", uid),
+    sb.from("notifications").select("*").eq("member_id", uid).order("ts",{ascending:false}),
+    sb.from("saved_items").select("*").eq("member_id", uid)
+  ]);
+  state.savedFilters = (filters||[]).map(f=>({id:f.id, keyword:f.keyword||"", category:f.category||""}));
+  state.notifications = (notes||[]).map(n=>({id:n.id, msg:n.msg, ts:new Date(n.ts).getTime(), read:!!n.read}));
+  state.savedRefs = (saved||[]).map(s=>({id:s.id, type:s.item_type, ref:s.item_ref}));
+}
+async function loadAdminReport(){
+  const {data, error} = await sb.rpc("admin_dashboard_report");
+  state.adminReport = error ? null : data;
+}
+
+function currentMember(){
+  if(!state.profile) return null;
+  return { ...state.profile, email: state.email, savedFilters: state.savedFilters, notifications: state.notifications };
+}
+function isPremium(){ const m = currentMember(); return !!(m && m.premium); }
+function isAdmin(){ return !!state.adminReport; }
+
+function renderAll(){
+  renderTopBanner();
+  renderEvents(); renderForum(); renderMarket();
+  renderHeaderMember(); renderBell(); renderMembersPanel();
+}
+
+function populateTownSelects(){
+  const opts = '<option value="">Select...</option>' + townNames.map(t=>`<option value="${t}">${t}</option>`).join("");
+  ["areaSelectModal","evTown","thTown","mkTown"].forEach(id=>{ document.getElementById(id).innerHTML = opts; });
+}
+
+function updateHomeTownUI(){
+  const label = document.getElementById("homeTownLabel");
+  if(state.homeTown){ label.textContent = state.homeTown; }
+  else { label.textContent = "not set"; }
+}
+async function setHomeTown(town){
+  if(!town) return;
+  state.homeTown = town;
+  savePersonal("home-town", town);
+  if(state.profile){
+    const {error} = await sb.from("members").update({town}).eq("id", state.profile.id);
+    if(error) console.error("Couldn't save town:", error);
+    else state.profile.town = town;
+  }
+  updateHomeTownUI(); renderAll();
+  renderPlaceList();
+}
+
+function distFromHome(town){
+  if(!state.homeTown || !townCoords[state.homeTown] || !townCoords[town]) return null;
+  const [lat1,lng1] = townCoords[state.homeTown];
+  const [lat2,lng2] = townCoords[town];
+  return haversineMiles(lat1,lng1,lat2,lng2);
+}
+function withinRange(town){ const d = distFromHome(town); return d === null ? true : d <= 10; }
+
+// ---------- Nav ----------
+function wireNav(){
+  document.querySelectorAll("nav.tabs button, .bottomnav button").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const tab = btn.dataset.tab;
+      document.querySelectorAll("nav.tabs button, .bottomnav button").forEach(b=>{
+        b.classList.toggle("active", b.dataset.tab === tab);
+      });
+      document.querySelectorAll("section.panel").forEach(p=>p.classList.remove("active"));
+      document.getElementById("panel-"+tab).classList.add("active");
+      if(tab === "map" && map) setTimeout(()=>map.invalidateSize(), 80);
+      window.scrollTo({top:0, behavior:"instant"});
+    });
+  });
+}
+function goToTab(name){
+  document.querySelector(`nav.tabs button[data-tab="${name}"]`).click();
+}
+function promptSignIn(reason){
+  state.signInReason = reason;
+  goToTab("members");
+  renderMembersPanel();
+}
+
+// ---------- PWA install prompt ----------
+let deferredInstallPrompt = null;
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if(!isStandalone) document.getElementById("installBanner").style.display = "flex";
+});
+document.getElementById("installBtn")?.addEventListener("click", async ()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById("installBanner").style.display = "none";
+});
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
+// ---------- Header (member chip + bell) ----------
+function wireHeader(){
+  document.getElementById("memberChipBtn").addEventListener("click", ()=>goToTab("members"));
+  document.getElementById("bellBtn").addEventListener("click", ()=>{
+    document.getElementById("bellDrop").classList.toggle("show");
+  });
+  document.getElementById("markAllRead").addEventListener("click", async ()=>{
+    if(!state.profile) return;
+    const unread = state.notifications.filter(n=>!n.read);
+    state.notifications.forEach(n=>n.read=true);
+    renderBell();
+    if(unread.length){
+      await sb.from("notifications").update({read:true}).in("id", unread.map(n=>n.id));
+    }
+  });
+  document.addEventListener("click", (e)=>{
+    if(!document.getElementById("bellWrap").contains(e.target)) document.getElementById("bellDrop").classList.remove("show");
+  });
+}
+function renderHeaderMember(){
+  const label = document.getElementById("memberChipLabel");
+  const btn = document.getElementById("memberChipBtn");
+  const m = currentMember();
+  if(m){
+    label.innerHTML = `${escapeHtml(m.name)} ${m.premium ? '<span class="premstar">★ Premium</span>' : ''}`;
+    btn.textContent = "Account";
+  } else {
+    label.textContent = "Not signed in";
+    btn.textContent = "Sign in";
+  }
+}
+function renderBell(){
+  const m = currentMember();
+  const wrap = document.getElementById("bellWrap");
+  if(!m){ wrap.style.display = "none"; return; }
+  wrap.style.display = "flex";
+  const notes = (m.notifications||[]).slice().sort((a,b)=>b.ts-a.ts);
+  const unread = notes.filter(n=>!n.read).length;
+  const countEl = document.getElementById("bellCount");
+  countEl.style.display = unread ? "flex" : "none";
+  countEl.textContent = unread;
+  document.getElementById("notifList").innerHTML = notes.length ? notes.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}">${escapeHtml(n.msg)}<span class="when">${timeAgo(n.ts)}</span></div>
+  `).join("") : `<div class="notif-item" style="color:var(--muted);">No notifications yet.</div>`;
+}
+
+// ---------- Top banner — exactly one message at a time, never stacked ----------
+function renderTopBanner(){
+  const el = document.getElementById("topBanner");
+  if(!CONFIGURED){ el.innerHTML = ""; return; }
+  if(state.communityError){
+    el.innerHTML = `<div class="banner"><p>We couldn't load the community content. Please refresh in a moment.</p><button class="ghost-btn" onclick="window.location.reload()">Refresh</button></div>`;
+    return;
+  }
+  const m = currentMember();
+
+  if(!state.homeTown){
+    el.innerHTML = `<div class="banner">
+      <p>Set your area so Events, Forum and Marketplace can show you what's within <strong>10 miles</strong> of you.</p>
+      <div class="locate-row" style="margin:0;">
+        <button class="locate-btn" id="locateBtnBanner">📍 Use my location</button>
+        <select id="bannerTownSelect"></select>
+      </div>
+    </div>`;
+    document.getElementById("bannerTownSelect").innerHTML = '<option value="">Or pick a town...</option>' + townNames.map(t=>`<option value="${t}">${t}</option>`).join("");
+    document.getElementById("bannerTownSelect").addEventListener("change", (e)=>{
+      if(!e.target.value) return;
+      setHomeTown(e.target.value);
+    });
+    document.getElementById("locateBtnBanner").addEventListener("click", ()=>useMyLocation(null, null, true));
+    return;
+  }
+  if(!m){
+    el.innerHTML = `<div class="dash-banner free">
+      <div><h4>Join Parent Chat</h4><p>Create a free account, then go Premium (£9.99/mo, first month free) to feature your business on Events, save marketplace searches and unlock member discounts.</p></div>
+      <button class="premium-btn" onclick="goToTab('members')">Get started</button>
+    </div>`;
+  } else if(!m.premium){
+    el.innerHTML = `<div class="dash-banner free">
+      <div><h4>Hi ${escapeHtml(m.name)}, you're on the Free plan</h4><p>Your first month of Premium is free — feature your business at the top of Events, save marketplace searches with alerts, and get member discounts.</p></div>
+      <button class="premium-btn" onclick="goToTab('members')">Try Premium free</button>
+    </div>`;
+  } else {
+    el.innerHTML = "";
+  }
+}
+
+// ---------- Modals ----------
+let pendingPhoto = null;
+let pendingReport = null;
+function wireModals(){
+  document.getElementById("setAreaBtn").addEventListener("click", ()=>openModal("overlayArea"));
+  document.getElementById("locateBtnModal").addEventListener("click", ()=>useMyLocation("areaSelectModal", "locateMsgModal", false));
+  document.getElementById("openGuidelines").addEventListener("click", ()=>openModal("overlayGuidelines"));
+  document.getElementById("submitReport").addEventListener("click", submitReport);
+
+  document.getElementById("openEventForm").addEventListener("click", ()=>{
+    if(!currentMember()){ promptSignIn("Sign in to post an event."); return; }
+    prepEventForm(); openModal("overlayEvent");
+  });
+  document.getElementById("openThreadForm").addEventListener("click", ()=>{
+    if(!currentMember()){ promptSignIn("Sign in to start a thread."); return; }
+    openModal("overlayThread");
+  });
+  document.getElementById("openListingForm").addEventListener("click", ()=>{
+    if(!currentMember()){ promptSignIn("Sign in to list an item."); return; }
+    pendingPhoto=null; document.getElementById("mkPhotoPreview").innerHTML="📷"; openModal("overlayListing");
+  });
+  document.getElementById("openSaveSearch").addEventListener("click", openSaveSearchModal);
+  document.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click", closeAllModals));
+  document.querySelectorAll(".overlay").forEach(ov=>ov.addEventListener("click", e=>{ if(e.target===ov) closeAllModals(); }));
+
+  document.getElementById("saveAreaBtn").addEventListener("click", ()=>{
+    const v = document.getElementById("areaSelectModal").value;
+    if(!v) return;
+    setHomeTown(v);
+    closeAllModals();
+  });
+
+  document.getElementById("evFeatured").addEventListener("change", (e)=>{
+    if(!isPremium()){ e.target.checked = false; }
+  });
+
+  document.getElementById("submitEvent").addEventListener("click", async ()=>{
+    const m = currentMember();
+    if(!m){ promptSignIn("Sign in to post an event."); closeAllModals(); return; }
+    const title = document.getElementById("evTitle").value.trim();
+    const town = document.getElementById("evTown").value;
+    if(!title || !town){ alert("Please add a title and town."); return; }
+    let photoUrl = null;
+    if(pendingPhoto){
+      try { photoUrl = await uploadMarketPhoto(pendingPhoto, m.id); }
+      catch(error){ alert("That photo could not be uploaded. Please try again."); console.error(error); return; }
+    }
+    const row = {
+      title, event_date: document.getElementById("evDate").value || futureDate(1),
+      description: document.getElementById("evDesc").value.trim(),
+      town, author: document.getElementById("evAuthor").value.trim() || m.name,
+      posted_by: m.id,
+      featured: isPremium() && document.getElementById("evFeatured").checked,
+      discount_note: document.getElementById("evDiscount").value.trim()
+    };
+    const {data, error} = await sb.from("events").insert(row).select().single();
+    if(error){ alert("Couldn't post that — please try again."); console.error(error); return; }
+    state.events.unshift(mapEventFromDb(data));
+    renderEvents(); renderDashboardWidget(); closeAllModals();
+    clearForm(["evTitle","evDate","evDesc","evAuthor","evDiscount"]); document.getElementById("evTown").value=""; document.getElementById("evFeatured").checked=false;
+  });
+
+  document.getElementById("submitThread").addEventListener("click", async ()=>{
+    const m = currentMember();
+    if(!m){ promptSignIn("Sign in to start a thread."); closeAllModals(); return; }
+    const title = document.getElementById("thTitle").value.trim();
+    const town = document.getElementById("thTown").value;
+    if(!title || !town){ alert("Please add a title and town."); return; }
+    const row = { title, body: document.getElementById("thBody").value.trim(), town, author: document.getElementById("thAuthor").value.trim() || m.name, posted_by: m.id };
+    const {data, error} = await sb.from("forum_threads").insert(row).select().single();
+    if(error){ alert("Couldn't post that — please try again."); console.error(error); return; }
+    state.forum.unshift(mapThreadFromDb(data));
+    renderForum(); closeAllModals(); clearForm(["thTitle","thBody","thAuthor"]); document.getElementById("thTown").value="";
+  });
+
+  document.getElementById("mkPhotoInput").addEventListener("change", (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    compressImage(file, (dataUrl)=>{
+      pendingPhoto = dataUrl;
+      document.getElementById("mkPhotoPreview").innerHTML = `<img src="${dataUrl}">`;
+    });
+  });
+
+  document.getElementById("submitListing").addEventListener("click", async ()=>{
+    const m = currentMember();
+    if(!m){ promptSignIn("Sign in to list an item."); closeAllModals(); return; }
+    const title = document.getElementById("mkTitle").value.trim();
+    const town = document.getElementById("mkTown").value;
+    if(!title || !town){ alert("Please add an item name and town."); return; }
+    const row = {
+      title, price: Number(document.getElementById("mkPrice").value)||0,
+      cond: document.getElementById("mkCondition").value,
+      category: document.getElementById("mkCategory").value,
+      description: document.getElementById("mkDesc").value.trim(),
+      town, author: document.getElementById("mkAuthor").value.trim() || m.name,
+      posted_by: m.id,
+      photo: photoUrl, discount_note: document.getElementById("mkDiscount").value.trim()
+    };
+    const {data, error} = await sb.from("market_listings").insert(row).select().single();
+    if(error){ alert("Couldn't list that — please try again."); console.error(error); return; }
+    state.market.unshift(mapListingFromDb(data));
+    renderMarket(); closeAllModals();
+    clearForm(["mkTitle","mkPrice","mkDesc","mkAuthor","mkDiscount"]); document.getElementById("mkTown").value="";
+    pendingPhoto = null; document.getElementById("mkPhotoPreview").innerHTML="📷"; document.getElementById("mkPhotoInput").value="";
+  });
+
+  document.getElementById("confirmUpgrade").addEventListener("click", ()=>{
+    const m = currentMember();
+    if(!m) return;
+    if(STRIPE_PAYMENT_LINK.startsWith("YOUR_")){
+      alert("Stripe isn't set up yet — add your Payment Link at the top of the script.");
+      return;
+    }
+    const url = new URL(STRIPE_PAYMENT_LINK);
+    url.searchParams.set("prefilled_email", m.email);
+    url.searchParams.set("client_reference_id", m.id);
+    window.location.href = url.toString();
+  });
+}
+function prepEventForm(){
+  const chk = document.getElementById("evFeatured");
+  const hint = document.getElementById("evFeaturedHint");
+  if(isPremium()){ chk.disabled=false; hint.textContent = "As a Premium member, your event can pin to the top."; }
+  else { chk.disabled=true; hint.innerHTML = 'Premium members only. <a href="#" onclick="closeAllModals();goToTab(\'members\');return false;" style="color:var(--sage-deep);font-weight:600;">Upgrade in Members</a>'; }
+}
+function clearForm(ids){ ids.forEach(id=>document.getElementById(id).value=""); }
+function openModal(id){ document.getElementById(id).classList.add("show"); }
+function closeAllModals(){ document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("show")); }
+
+function compressImage(file, cb){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 480;
+      const scale = Math.min(1, maxW/img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width*scale);
+      canvas.height = Math.round(img.height*scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      cb(canvas.toDataURL("image/jpeg",0.65));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+async function uploadMarketPhoto(dataUrl, memberId){
+  const blob = await fetch(dataUrl).then(response=>response.blob());
+  const path = `${memberId}/${crypto.randomUUID()}.jpg`;
+  const {error} = await sb.storage.from("market-photos").upload(path, blob, {contentType:"image/jpeg", upsert:false});
+  if(error) throw error;
+  return sb.storage.from("market-photos").getPublicUrl(path).data.publicUrl;
+}
+
+// ---------- Search ----------
+function wireSearch(){
+  document.getElementById("eventsSearch").addEventListener("input", (e)=>{ state.searchEvents = e.target.value.toLowerCase(); renderEvents(); });
+  document.getElementById("forumSearch").addEventListener("input", (e)=>{ state.searchForum = e.target.value.toLowerCase(); renderForum(); });
+  document.getElementById("marketSearch").addEventListener("input", (e)=>{ state.searchMarket = e.target.value.toLowerCase(); renderMarket(); });
+}
+
+// ---------- Geolocation ----------
+function findNearestTown(lat, lng){
+  let best = null, bestDist = Infinity;
+  for(const [name, coords] of Object.entries(townCoords)){
+    const d = haversineMiles(lat, lng, coords[0], coords[1]);
+    if(d < bestDist){ bestDist = d; best = name; }
+  }
+  return best;
+}
+function useMyLocation(selectId, msgId, autoSave){
+  const msgEl = msgId ? document.getElementById(msgId) : null;
+  if(!navigator.geolocation){
+    if(msgEl) msgEl.textContent = "Location isn't available in this browser.";
+    return;
+  }
+  if(msgEl) msgEl.textContent = "Finding your nearest town…";
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const town = findNearestTown(pos.coords.latitude, pos.coords.longitude);
+      if(selectId) document.getElementById(selectId).value = town;
+      if(msgEl) msgEl.textContent = `Nearest match: ${town}`;
+      if(autoSave){
+        setHomeTown(town);
+      }
+    },
+    ()=>{ if(msgEl) msgEl.textContent = "Couldn't get your location — please pick a town instead."; }
+  );
+}
+
+// ---------- Save for later (free feature) ----------
+function isSaved(type, ref){ return state.savedRefs.some(s=>s.type===type && s.ref===ref); }
+async function toggleSave(type, ref){
+  const m = currentMember();
+  if(!m){ promptSignIn("Sign in to save this for later."); return; }
+  const existing = state.savedRefs.find(s=>s.type===type && s.ref===ref);
+  if(existing){
+    await sb.from("saved_items").delete().eq("id", existing.id);
+    state.savedRefs = state.savedRefs.filter(s=>s.id!==existing.id);
+  } else {
+    const {data, error} = await sb.from("saved_items").insert({member_id:m.id, item_type:type, item_ref:ref}).select().single();
+    if(error){ console.error(error); return; }
+    state.savedRefs.push({id:data.id, type, ref});
+  }
+  if(type==="event") renderEvents(); else renderPlaceList();
+  renderMembersPanel();
+}
+const ICON_HEART_OUTLINE = `<svg viewBox="0 0 24 24" fill="none" stroke="#5C5548" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.6-9.3 9-9.3 9z"/></svg>`;
+const ICON_HEART_FILL = `<svg viewBox="0 0 24 24" fill="#B9924F" stroke="#B9924F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.6-9.3 9-9.3 9z"/></svg>`;
+
+// ---------- Report ----------
+function openReportModal(targetType, targetId){
+  if(!currentMember()){ promptSignIn("Sign in to report something."); return; }
+  pendingReport = {targetType, targetId};
+  document.getElementById("repMsg").innerHTML = "";
+  openModal("overlayReport");
+}
+async function submitReport(){
+  const m = currentMember();
+  if(!m || !pendingReport) return;
+  const reason = document.getElementById("repReason").value;
+  const details = document.getElementById("repDetails").value.trim();
+  const msg = document.getElementById("repMsg");
+  const {error} = await sb.from("reports").insert({
+    target_type: pendingReport.targetType, target_id: pendingReport.targetId,
+    reason, details, reported_by: m.id
+  });
+  if(error){ msg.innerHTML = `<div class="msg-line err">Couldn't send that — please try again.</div>`; console.error(error); return; }
+  msg.innerHTML = `<div class="msg-line ok">Thanks — we've received your report.</div>`;
+  document.getElementById("repDetails").value = "";
+  setTimeout(closeAllModals, 1200);
+}
+
+// ---------- Returning from Stripe Checkout ----------
+function handleStripeReturn(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.get("upgraded") !== "1") return;
+  history.replaceState({}, "", window.location.pathname);
+  goToTab("members");
+  const el = document.getElementById("membersContent");
+  const note = document.createElement("div");
+  note.className = "msg-line ok";
+  note.style.maxWidth = "420px";
+  note.style.margin = "0 auto 16px";
+  note.textContent = "Thanks! Activating your Premium — this can take up to a minute.";
+  el.prepend(note);
+  let tries = 0;
+  const poll = setInterval(async ()=>{
+    tries++;
+    if(state.profile){
+      const {data} = await sb.from("members").select("premium").eq("id", state.profile.id).single();
+      if(data?.premium){ clearInterval(poll); await loadMyProfile(); renderAll(); }
+    }
+    if(tries > 20) clearInterval(poll);
+  }, 3000);
+}
+
+// ---------- Save-search modal (premium gated) ----------
+function openSaveSearchModal(){
+  const m = currentMember();
+  const body = document.getElementById("saveSearchBody");
+  if(!m){
+    body.innerHTML = `<p style="font-size:13.5px;color:var(--charcoal-soft);">Sign in (it's free) to save searches and get notified.</p>
+      <div class="modal-actions"><button class="ghost-btn" data-close>Close</button><button class="primary-btn" onclick="closeAllModals();goToTab('members');">Sign in</button></div>`;
+  } else if(!m.premium){
+    body.innerHTML = `<p style="font-size:13.5px;color:var(--charcoal-soft);">Saved searches with notifications are a Premium perk (£9.99/mo).</p>
+      <div class="modal-actions"><button class="ghost-btn" data-close>Close</button><button class="premium-btn" onclick="closeAllModals();goToTab('members');">Upgrade to Premium</button></div>`;
+  } else {
+    body.innerHTML = `
+      <div class="field"><label>Keyword</label><input id="fsKeyword" placeholder="e.g. pushchair, cot, size 2 shoes"></div>
+      <div class="field"><label>Category (optional)</label>
+        <select id="fsCategory"><option value="">Any category</option>
+        <option>Pushchairs &amp; Travel</option><option>Clothing</option><option>Toys &amp; Games</option>
+        <option>Nursery Furniture</option><option>Feeding</option><option>Books</option><option>Other</option></select>
+      </div>
+      <div class="modal-actions"><button class="ghost-btn" data-close>Cancel</button><button class="primary-btn" id="fsSave">Save search</button></div>`;
+    document.getElementById("fsSave").addEventListener("click", async ()=>{
+      const kw = document.getElementById("fsKeyword").value.trim();
+      const cat = document.getElementById("fsCategory").value;
+      if(!kw && !cat){ alert("Add a keyword or pick a category."); return; }
+      const {data, error} = await sb.from("saved_filters").insert({member_id:m.id, keyword:kw, category:cat}).select().single();
+      if(error){ alert("Couldn't save that search."); console.error(error); return; }
+      state.savedFilters.push({id:data.id, keyword:kw, category:cat});
+      closeAllModals(); renderMembersPanel();
+    });
+  }
+  openModal("overlaySaveSearch");
+}
+
+// ---------- Renderers: Events / Forum / Market ----------
+function renderEvents(){
+  const grid = document.getElementById("eventsGrid");
+  let list = state.events.filter(e=>withinRange(e.town));
+  if(state.searchEvents) list = list.filter(e=> (e.title+" "+e.desc).toLowerCase().includes(state.searchEvents));
+  list.sort((a,b)=>{
+    if(!!b.featured !== !!a.featured) return (b.featured?1:0)-(a.featured?1:0);
+    return new Date(a.date)-new Date(b.date);
+  });
+  document.getElementById("eventsSub").textContent = state.homeTown ? `Showing events within 10 miles of ${state.homeTown}.` : `Set your area to filter by distance — showing all events for now.`;
+  if(!list.length){ grid.innerHTML = emptyState("No events nearby yet", "Be the first to post something for local families."); return; }
+  grid.innerHTML = list.map(e=>{
+    const d = distFromHome(e.town);
+    const deal = e.discountNote;
+    const saved = isSaved("event", e.id);
+    return `<div class="pin-card ${e.featured?'featured':''}">
+      <button class="save-btn ${saved?'on':''}" onclick="toggleSave('event','${e.id}')" title="Save for later">${saved?ICON_HEART_FILL:ICON_HEART_OUTLINE}</button>
+      ${e.featured?'<span class="badge premium" style="margin-bottom:8px;display:inline-block;">★ Featured</span><br>':''}
+      <div class="ev-date">${formatDate(e.date)}</div>
+      <h3>${escapeHtml(e.title)}</h3>
+      <p class="desc">${escapeHtml(e.desc||"")}</p>
+      ${deal?`<div class="deal-note">★ ${escapeHtml(deal)}</div>`:""}
+      <div class="meta-row">
+        <span class="town">${escapeHtml(e.town)}</span>
+        <span class="dist">${d!==null? d.toFixed(1)+" mi away" : ""}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderForum(){
+  const wrap = document.getElementById("threadList");
+  let list = state.forum.filter(t=>withinRange(t.town));
+  if(state.searchForum) list = list.filter(t=> (t.title+" "+t.body).toLowerCase().includes(state.searchForum));
+  list.sort((a,b)=>b.ts-a.ts);
+  document.getElementById("forumSub").textContent = state.homeTown ? `Threads from parents within 10 miles of ${state.homeTown}.` : `Set your area to filter by distance — showing all threads for now.`;
+  if(!list.length){ wrap.innerHTML = emptyState("No threads nearby yet", "Start the conversation — ask a question or share some news."); return; }
+  wrap.innerHTML = list.map(t=>`
+    <div class="thread" id="thread-${t.id}">
+      <div class="thread-head" onclick="toggleThread('${t.id}')">
+        <div><h3>${escapeHtml(t.title)}</h3><div class="snippet">${escapeHtml(t.body.slice(0,110))}${t.body.length>110?"…":""}</div></div>
+        <div class="thread-meta">${escapeHtml(t.town)}<br>${t.replies.length} repl${t.replies.length===1?"y":"ies"}</div>
+      </div>
+      <div class="thread-body">
+        <p style="font-size:13.5px;margin-top:0;"><strong>${escapeHtml(t.author)}</strong> <span style="color:var(--muted);font-size:11px;">${timeAgo(t.ts)}</span><br>${escapeHtml(t.body)}</p>
+        ${t.replies.map(r=>`<div class="reply"><span class="who">${escapeHtml(r.who)}</span><span class="when">${timeAgo(r.ts)}</span><p>${escapeHtml(r.body)}</p></div>`).join("")}
+        <div class="reply-form"><input type="text" placeholder="Write a reply..." id="reply-input-${t.id}"><button class="ghost-btn" onclick="postReply('${t.id}')">Reply</button></div>
+        <div style="text-align:right;margin-top:8px;"><button class="report-link" onclick="event.stopPropagation();openReportModal('thread','${t.id}')">Report this thread</button></div>
+      </div>
+    </div>
+  `).join("");
+}
+function toggleThread(id){ document.getElementById("thread-"+id).classList.toggle("open"); }
+async function postReply(id){
+  const m = currentMember();
+  if(!m){ promptSignIn("Sign in to reply."); return; }
+  const input = document.getElementById("reply-input-"+id);
+  const body = input.value.trim();
+  if(!body) return;
+  const {data, error} = await sb.from("forum_replies").insert({thread_id:id, who:m.name, body, posted_by:m.id}).select().single();
+  if(error){ alert("Couldn't post that reply."); console.error(error); return; }
+  const t = state.forum.find(x=>x.id===id);
+  t.replies.push(mapReplyFromDb(data));
+  renderForum();
+  document.getElementById("thread-"+id).classList.add("open");
+}
+
+function renderMarket(){
+  const grid = document.getElementById("marketGrid");
+  let list = state.market.filter(m=>withinRange(m.town));
+  if(state.searchMarket) list = list.filter(mkt=> (mkt.title+" "+mkt.desc).toLowerCase().includes(state.searchMarket));
+  list.sort((a,b)=>b.ts-a.ts);
+  document.getElementById("marketSub").textContent = state.homeTown ? `Second-hand kit for sale within 10 miles of ${state.homeTown}.` : `Set your area to filter by distance — showing all listings for now.`;
+  if(!list.length){ grid.innerHTML = emptyState("No listings nearby yet", "List a pre-loved item other parents might need."); return; }
+  const emojis = ["🧸","👕","🚼","🪑","📚","🚲"];
+  grid.innerHTML = list.map((mkt,i)=>{
+    const d = distFromHome(mkt.town);
+    return `<div class="pin-card mk-card">
+      <div class="mk-photo">${mkt.photo?`<img src="${mkt.photo}">`:emojis[i%emojis.length]}</div>
+      <span class="badge">${escapeHtml(mkt.cond)}</span> <span class="badge premium">${escapeHtml(mkt.category||"Other")}</span> ${mkt.sold?'<span class="badge" style="background:#eadfd4;color:#6b5545;">Sold</span>':''}
+      <h3 style="margin-top:10px;">${escapeHtml(mkt.title)}</h3>
+      <p class="desc">${escapeHtml(mkt.desc||"")}</p>
+      <div class="price">£${mkt.price}</div>
+      ${mkt.discountNote?`<div class="deal-note">★ ${escapeHtml(mkt.discountNote)}</div>`:""}
+      <div class="meta-row">
+        <span class="town">${escapeHtml(mkt.town)} · ${escapeHtml(mkt.author)}</span>
+        <span class="dist">${d!==null? d.toFixed(1)+" mi" : ""}</span>
+      </div>
+      <div style="text-align:right;margin-top:8px;">${!mkt.sold && mkt.postedBy===currentMember()?.id?`<button class="report-link" onclick="markListingSold('${mkt.id}')">Mark as sold</button> · `:""}<button class="report-link" onclick="openReportModal('listing','${mkt.id}')">Report this listing</button></div>
+    </div>`;
+  }).join("");
+}
+
+function emptyState(title, sub){ return `<div class="empty" style="grid-column:1/-1;"><div class="display">${title}</div><div>${sub}</div></div>`; }
+async function markListingSold(id){
+  const {data, error} = await sb.from("market_listings").update({sold:true, sold_at:new Date().toISOString()}).eq("id", id).select().single();
+  if(error){ alert("Couldn't mark that item as sold."); console.error(error); return; }
+  const listing = state.market.find(item=>item.id===id);
+  if(listing) Object.assign(listing, mapListingFromDb(data));
+  renderMarket();
+}
+function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function formatDate(iso){ try{ return new Date(iso+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); } catch(e){ return iso; } }
+function timeAgo(ts){
+  const mins = Math.floor((Date.now()-ts)/60000);
+  if(mins<60) return mins+"m ago";
+  const hrs = Math.floor(mins/60);
+  if(hrs<24) return hrs+"h ago";
+  return Math.floor(hrs/24)+"d ago";
+}
+
+// ---------- Map ----------
+let map, markers=[];
+function buildMap(){
+  map = L.map('map', {scrollWheelZoom:false}).setView([50.95,-0.35], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
+  plotMarkers();
+}
+function goldDivIcon(color){
+  return L.divIcon({ className:'', html:`<div style="width:16px;height:16px;border-radius:50% 50% 50% 0;background:${color};border:2px solid #FBF8F2;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(51,46,39,0.35);"></div>`, iconSize:[16,16], iconAnchor:[8,16] });
+}
+function plotMarkers(){
+  markers.forEach(m=>map.removeLayer(m));
+  markers = [];
+  const visible = places.filter(p=> state.activeCat==="all" || p.cat===state.activeCat);
+  visible.forEach(p=>{
+    const mk = L.marker([p.lat,p.lng], {icon: goldDivIcon(catInfo[p.cat].color)}).addTo(map);
+    const deal = dealPlaces[p.name];
+    mk.bindPopup(`<strong>${escapeHtml(p.name)}</strong><br><span style="color:#8A8271;">${escapeHtml(p.town)} · ${catInfo[p.cat].label}</span>${deal?`<br><span style="color:#7A5B22;font-size:12px;">★ ${escapeHtml(deal)}</span>`:""}`);
+    mk._place = p;
+    markers.push(mk);
+  });
+}
+function buildCatBar(){
+  const bar = document.getElementById("catBar");
+  const cats = [["all","All places"]].concat(Object.entries(catInfo).map(([k,v])=>[k,v.label]));
+  bar.innerHTML = cats.map(([k,label])=>`<button class="catchip ${k===state.activeCat?'on':''}" data-cat="${k}">${label}</button>`).join("");
+  bar.querySelectorAll(".catchip").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.activeCat = btn.dataset.cat;
+      bar.querySelectorAll(".catchip").forEach(b=>b.classList.remove("on"));
+      btn.classList.add("on");
+      plotMarkers(); renderPlaceList();
+    });
+  });
+}
+function renderPlaceList(){
+  const wrap = document.getElementById("placeList");
+  const visible = places.filter(p=> state.activeCat==="all" || p.cat===state.activeCat).sort((a,b)=>{
+    const aDistance = distFromHome(a.town);
+    const bDistance = distFromHome(b.town);
+    if(aDistance === null && bDistance === null) return a.name.localeCompare(b.name);
+    if(aDistance === null) return 1;
+    if(bDistance === null) return -1;
+    return aDistance - bDistance || a.name.localeCompare(b.name);
+  });
+  wrap.innerHTML = visible.map(p=>{
+    const deal = dealPlaces[p.name];
+    const ref = p.name+"|"+p.town;
+    const saved = isSaved("place", ref);
+    return `<div class="place-item" style="position:relative;">
+      <button class="save-btn ${saved?'on':''}" style="top:10px;right:10px;width:28px;height:28px;" onclick="event.stopPropagation();toggleSave('place','${ref.replace(/'/g,"\\'")}')" title="Save for later">${saved?ICON_HEART_FILL:ICON_HEART_OUTLINE}</button>
+      <div onclick="flyToPlace('${p.name.replace(/'/g,"\\'")}','${p.town.replace(/'/g,"\\'")}')" style="cursor:pointer;padding-right:30px;">
+        <h4>${escapeHtml(p.name)} ${deal?'<span class="badge deal">★ deal</span>':''}</h4>
+        <div class="town">${escapeHtml(p.town)} · <span class="badge" style="background:${catInfo[p.cat].color}22;color:${catInfo[p.cat].color};">${catInfo[p.cat].label}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function flyToPlace(name, town){
+  const mk = markers.find(m=>m._place.name===name && m._place.town===town);
+  if(mk){ map.flyTo(mk.getLatLng(), 13, {duration:0.6}); setTimeout(()=>mk.openPopup(), 500); }
+}
+
+// ---------- Members panel ----------
+const ICON_CALENDAR = `<svg viewBox="0 0 24 24" fill="none" stroke="#6C7A5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>`;
+const ICON_MAP = `<svg viewBox="0 0 24 24" fill="none" stroke="#6C7A5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg>`;
+const ICON_CHAT = `<svg viewBox="0 0 24 24" fill="none" stroke="#6C7A5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 1 1-3.4-6.5L21 5l-1 3.6A7.9 7.9 0 0 1 21 12z"/></svg>`;
+const ICON_TAG = `<svg viewBox="0 0 24 24" fill="none" stroke="#6C7A5C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l1.5-3.5h9L18 7M4 7h16l-1.2 12.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 7z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg>`;
+
+function renderMembersPanel(){
+  const el = document.getElementById("membersContent");
+  const m = currentMember();
+
+  if(!m){
+    const reasonHtml = state.signInReason ? `<div class="signin-reason">${escapeHtml(state.signInReason)}</div>` : "";
+    el.innerHTML = `
+      <div class="welcome-grid">
+        <div class="welcome-intro">
+          <div class="mark-lg">
+            <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+              <path d="M11 15c-1.5-3-1-6.5 1.5-8 .5 2 .5 3.5 0 5m10.5-5c2.5 1.5 3 5 1.5 8-.5-1.5-.5-3 0-5" stroke="#8A9678" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+              <ellipse cx="17" cy="20" rx="8" ry="7.2" stroke="#332E27" stroke-width="1.4" fill="none"/>
+              <circle cx="14.2" cy="19" r="0.9" fill="#332E27"/><circle cx="19.8" cy="19" r="0.9" fill="#332E27"/>
+              <path d="M15.5 22.3c.6.6 2.4.6 3 0" stroke="#332E27" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>Welcome to Parent Chat</h2>
+          <p class="welcome-desc">A quieter corner of the internet for parents nearby. Find days out, swap advice with people who get it, and pick up second-hand kit — all within ten miles of home.</p>
+          <ul class="welcome-features">
+            <li>${ICON_CALENDAR}<span>Discover local events, farms, soft play and days out</span></li>
+            <li>${ICON_MAP}<span>Browse an interactive map of places to go nearby</span></li>
+            <li>${ICON_CHAT}<span>Ask questions and swap tips in the community forum</span></li>
+            <li>${ICON_TAG}<span>Buy and sell second-hand kit with parents close by</span></li>
+          </ul>
+          <p class="welcome-note">Free to join. Premium (£9.99/mo) adds business promotion on Events, saved marketplace alerts, and member discounts.</p>
+        </div>
+
+        <div class="auth-wrap">
+          ${reasonHtml}
+          ${renderAuthStage()}
+        </div>
+      </div>`;
+    wireAuthStage();
+    return;
+  }
+
+  const deals = Object.entries(dealPlaces).map(([n,note])=>`<li><span class="ic">★</span> <strong>${escapeHtml(n)}</strong> — ${escapeHtml(note)}</li>`).join("");
+  const filters = (m.savedFilters||[]);
+  const savedEvents = state.savedRefs.filter(s=>s.type==="event").map(s=>state.events.find(e=>e.id===s.ref)).filter(Boolean);
+  const savedPlaces = state.savedRefs.filter(s=>s.type==="place").map(s=>{ const [name,town]=s.ref.split("|"); return {name,town,ref:s.ref}; });
+  el.innerHTML = `
+    <div class="dashgrid">
+      <div>
+        <div class="dashcard">
+          <span class="planpill ${m.premium?'premium':'free'}">${m.premium?'★ Premium member':'Free member'}</span>
+          <h3>Hi ${escapeHtml(m.name)}</h3>
+          <p style="font-size:12.5px;color:var(--muted);">${escapeHtml(m.town)} · member since ${new Date(m.joined).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}</p>
+          ${m.premium ? '' : `<button class="premium-btn" style="margin-top:10px;" id="openUpgrade">Try Premium free</button>`}
+          <div style="margin-top:16px;"><button class="ghost-btn" id="doLogout">Log out</button></div>
+        </div>
+
+        <div class="dashcard">
+          <h3>Premium perks</h3>
+          <ul class="perklist">
+            <li><span class="ic">★</span> Save marketplace searches &amp; get notified of new matches</li>
+            <li><span class="ic">★</span> Discounts at selected farms, events &amp; places</li>
+            <li><span class="ic">★</span> Got a business? Feature it at the top of Events</li>
+          </ul>
+        </div>
+
+        <div class="dashcard">
+          <h3>Saved for later</h3>
+          <p style="font-size:11.5px;color:var(--muted);margin-top:-6px;margin-bottom:10px;">Free for everyone — tap the ♡ on any event or place to save it here.</p>
+          <div class="saved-list">
+            ${(savedEvents.length+savedPlaces.length)===0 ? '<div style="font-size:12px;color:var(--muted);">Nothing saved yet.</div>' : ''}
+            ${savedEvents.map(e=>`<div class="saved-row"><span>📅 ${escapeHtml(e.title)}</span><button onclick="goToTab('events')">View</button></div>`).join("")}
+            ${savedPlaces.map(p=>`<div class="saved-row"><span>📍 ${escapeHtml(p.name)}</span><button onclick="goToTab('map');setTimeout(()=>flyToPlace('${p.name.replace(/'/g,"\\'")}','${p.town.replace(/'/g,"\\'")}'),150)">View</button></div>`).join("")}
+          </div>
+        </div>
+
+        ${isAdmin() ? renderAdminCard() : ""}
+      </div>
+
+      <div>
+        <div class="dashcard ${m.premium?'':'lockwrap'}">
+          <div class="${m.premium?'':'locked'}">
+            <h3>Saved marketplace searches</h3>
+            <div class="filterlist" id="filterList">
+              ${filters.length? filters.map(f=>`<div class="filter-row"><span>${escapeHtml(f.keyword||'')}${f.keyword&&f.category?' · ':''}${escapeHtml(f.category||'')}</span><button data-fid="${f.id}" class="rmFilter">remove</button></div>`).join("") : '<div style="font-size:12px;color:var(--muted);">No saved searches yet.</div>'}
+            </div>
+            <div class="addfilter">
+              <input id="newFilterKw" placeholder="keyword e.g. cot">
+              <select id="newFilterCat"><option value="">Any category</option><option>Pushchairs &amp; Travel</option><option>Clothing</option><option>Toys &amp; Games</option><option>Nursery Furniture</option><option>Feeding</option><option>Books</option><option>Other</option></select>
+              <button class="ghost-btn" id="addFilterBtn">Add</button>
+            </div>
+          </div>
+          ${m.premium?'':`<div class="lockover"><p style="font-size:13px;color:var(--charcoal-soft);max-width:260px;">Saved searches with instant alerts are a Premium perk.</p><button class="premium-btn" id="openUpgrade3">Try Premium free</button></div>`}
+        </div>
+
+        <div class="dashcard">
+          <h3>Member discounts</h3>
+          <ul class="perklist">${deals}</ul>
+          ${m.premium? '<p style="font-size:11.5px;color:var(--muted);">Show your account on the Members tab at the venue to redeem.</p>' : '<p style="font-size:11.5px;color:var(--muted);">Upgrade to Premium to redeem these.</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ["openUpgrade","openUpgrade3"].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.addEventListener("click", ()=>openModal("overlayUpgrade"));
+  });
+  const logoutBtn = document.getElementById("doLogout");
+  if(logoutBtn) logoutBtn.addEventListener("click", doLogout);
+
+
+  if(m.premium){
+    document.getElementById("addFilterBtn").addEventListener("click", async ()=>{
+      const kw = document.getElementById("newFilterKw").value.trim();
+      const cat = document.getElementById("newFilterCat").value;
+      if(!kw && !cat){ alert("Add a keyword or pick a category."); return; }
+      const {data, error} = await sb.from("saved_filters").insert({member_id:m.id, keyword:kw, category:cat}).select().single();
+      if(error){ alert("Couldn't save that."); console.error(error); return; }
+      state.savedFilters.push({id:data.id, keyword:kw, category:cat});
+      renderMembersPanel();
+    });
+    document.querySelectorAll(".rmFilter").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await sb.from("saved_filters").delete().eq("id", btn.dataset.fid);
+        state.savedFilters = state.savedFilters.filter(f=>f.id!==btn.dataset.fid);
+        renderMembersPanel();
+      });
+    });
+  }
+}
+
+function renderAdminCard(){
+  const report = state.adminReport || {members:[], threads:[], listings:[], reports:[]};
+  const list = report.members || [];
+  const threads = report.threads || [];
+  const listings = report.listings || [];
+  const reports = report.reports || [];
+  const total = list.length;
+  const premium = list.filter(x=>x.premium).length;
+  const pct = total ? Math.round((premium/total)*100) : 0;
+  const recent = list.slice().sort((a,b)=>new Date(b.joined)-new Date(a.joined)).slice(0,5);
+  return `
+    <div class="dashcard">
+      <h3>Admin — members &amp; history</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:var(--cream);border-radius:12px;padding:12px;">
+          <div style="font-size:22px;font-family:'Fraunces',serif;">${total}</div>
+          <div style="font-size:11.5px;color:var(--muted);">Total members</div>
+        </div>
+        <div style="background:var(--ochre-pale);border-radius:12px;padding:12px;">
+          <div style="font-size:22px;font-family:'Fraunces',serif;color:#7A5B22;">${premium}</div>
+          <div style="font-size:11.5px;color:#7A5B22;">Premium (${pct}%)</div>
+        </div>
+        <div style="background:var(--cream);border-radius:12px;padding:12px;">
+          <div style="font-size:22px;font-family:'Fraunces',serif;">${threads.length}</div>
+          <div style="font-size:11.5px;color:var(--muted);">Forum posts</div>
+        </div>
+        <div style="background:var(--cream);border-radius:12px;padding:12px;">
+          <div style="font-size:22px;font-family:'Fraunces',serif;">${listings.length}</div>
+          <div style="font-size:11.5px;color:var(--muted);">Marketplace listings</div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--charcoal);margin-bottom:6px;">Members</div>
+      <ul class="perklist">
+        ${recent.map(r=>`<li style="display:block;"><span class="ic">·</span> <strong>${escapeHtml(r.name)}</strong> — ${escapeHtml(r.email)}<br><span style="color:var(--muted);margin-left:18px;">${escapeHtml(r.town)} · ${new Date(r.joined).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}</span></li>`).join("")}
+      </ul>
+      <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12px;font-weight:700;">Forum history</summary><ul class="perklist">${threads.map(t=>`<li style="display:block;"><strong>${escapeHtml(t.title)}</strong> — ${escapeHtml(t.author)} · ${escapeHtml(t.town)}<br><span style="font-size:11px;color:var(--muted);">${new Date(t.created_at).toLocaleString("en-GB")}</span></li>`).join("") || '<li>No forum posts yet.</li>'}</ul></details>
+      <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12px;font-weight:700;">Marketplace history</summary><ul class="perklist">${listings.map(l=>`<li style="display:block;"><strong>${escapeHtml(l.title)}</strong> — £${Number(l.price||0).toFixed(2)} · ${escapeHtml(l.author)} · ${escapeHtml(l.town)}<br><span style="font-size:11px;color:var(--muted);">${new Date(l.created_at).toLocaleString("en-GB")}</span></li>`).join("") || '<li>No marketplace listings yet.</li>'}</ul></details>
+      <details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12px;font-weight:700;">Reports (${reports.length})</summary><ul class="perklist">${reports.map(r=>`<li style="display:block;"><strong>${escapeHtml(r.target_type)} — ${escapeHtml(r.reason)}</strong><br><span style="font-size:11px;color:var(--muted);">${escapeHtml(r.details||"No further detail")} · ${new Date(r.created_at).toLocaleString("en-GB")}</span></li>`).join("") || '<li>No reports yet.</li>'}</ul></details>
+      <p style="font-size:11px;color:var(--muted);">Admin data is protected by Supabase and visible only to allowlisted, confirmed admin accounts.</p>
+    </div>`;
+}
+
+// ---------- Auth: password sign-in and account creation ----------
+function renderAuthStage(){
+  if(state.authStage === "resetting"){
+    return `<h3>Set a new password</h3><div id="authMsg"></div><div class="field"><label>New password</label><input id="newPassword" type="password" autocomplete="new-password"></div><button class="primary-btn" style="width:100%;justify-content:center;" id="updatePasswordBtn">Update password</button>`;
+  }
+  if(state.authStage === "sent"){
+    return `
+      <div style="text-align:center;padding:10px 0;">
+        <h3 style="margin-bottom:10px;">Check your email</h3>
+        <p style="font-size:13.5px;color:var(--charcoal-soft);">We've sent a confirmation email to <strong>${escapeHtml(state.pendingEmail||"")}</strong>. Confirm your email, then you'll be signed in automatically.</p>
+        <button class="ghost-btn" style="margin-top:16px;" id="useDifferentEmail">Use a different email</button>
+      </div>`;
+  }
+  if(state.authStage === "completing"){
+    return `
+      <h3>Almost there</h3>
+      <p style="font-size:13px;color:var(--charcoal-soft);margin-bottom:16px;">You're signed in — just need your name and nearest town to finish setting up.</p>
+      <div class="field"><label>Your name</label><input id="cpName" placeholder="e.g. Sarah Jones"></div>
+      <div class="field"><label>Nearest town / village</label><select id="cpTown"></select></div>
+      <div id="cpMsg"></div>
+      <button class="primary-btn" style="width:100%;justify-content:center;" id="doCompleteProfile">Finish setting up</button>`;
+  }
+  const createMode = state.authMode === "create";
+  return `
+    <h3>${createMode ? "Create an account" : "Sign in"}</h3>
+    <div id="authMsg"></div>
+    ${createMode ? '<div class="field"><label>Your name</label><input id="suName" placeholder="e.g. Sarah Jones"></div>' : ""}
+    <div class="field"><label>Email</label><input id="suEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input id="suPassword" type="password" autocomplete="${createMode ? "new-password" : "current-password"}" placeholder="At least 6 characters"></div>
+    ${createMode ? `<div class="field">
+      <label>Nearest town / village</label>
+      <div class="locate-row"><button class="locate-btn" id="locateBtnSignup" type="button">📍 Use my location</button></div>
+      <select id="suTown"></select>
+    </div>` : ""}
+    <button class="primary-btn" style="width:100%;justify-content:center;" id="authSubmitBtn">${createMode ? "Create account" : "Sign in"}</button>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:12px;text-align:center;">${createMode ? 'Already have an account? <a href="#" id="showSignin">Sign in</a>' : 'New here? <a href="#" id="showCreateAccount">Create an account</a> · <a href="#" id="forgotPassword">Forgot password?</a>'}</p>`;
+}
+function wireAuthStage(){
+  if(state.authStage === "resetting"){
+    document.getElementById("updatePasswordBtn").addEventListener("click", async ()=>{
+      const password = document.getElementById("newPassword").value;
+      const msg = document.getElementById("authMsg");
+      if(password.length < 6){ msg.innerHTML = `<div class="msg-line err">Your password must be at least 6 characters.</div>`; return; }
+      const {error} = await sb.auth.updateUser({password});
+      if(error){ msg.innerHTML = `<div class="msg-line err">Couldn't update your password — ${escapeHtml(error.message)}</div>`; return; }
+      state.authStage = "idle"; renderAll();
+    });
+    return;
+  }
+  if(state.authStage === "sent"){
+    document.getElementById("useDifferentEmail")?.addEventListener("click", ()=>{ state.authStage="idle"; renderMembersPanel(); });
+    return;
+  }
+  if(state.authStage === "completing"){
+    document.getElementById("cpTown").innerHTML = '<option value="">Select...</option>' + townNames.map(t=>`<option value="${t}">${t}</option>`).join("");
+    document.getElementById("doCompleteProfile").addEventListener("click", async ()=>{
+      const name = document.getElementById("cpName").value.trim();
+      const town = document.getElementById("cpTown").value;
+      const msg = document.getElementById("cpMsg");
+      if(!name || !town){ msg.innerHTML = `<div class="msg-line err">Please add your name and town.</div>`; return; }
+      await completeProfileWith(name, town);
+      renderAll();
+    });
+    return;
+  }
+  if(state.authMode === "create"){
+    document.getElementById("suTown").innerHTML = '<option value="">Select...</option>' + townNames.map(t=>`<option value="${t}">${t}</option>`).join("");
+    document.getElementById("locateBtnSignup").addEventListener("click", ()=>useMyLocation("suTown", null, false));
+    document.getElementById("showSignin").addEventListener("click", (event)=>{ event.preventDefault(); state.authMode="signin"; renderMembersPanel(); });
+  } else {
+    document.getElementById("showCreateAccount").addEventListener("click", (event)=>{ event.preventDefault(); state.authMode="create"; renderMembersPanel(); });
+    document.getElementById("forgotPassword").addEventListener("click", (event)=>{ event.preventDefault(); requestPasswordReset(); });
+  }
+  document.getElementById("authSubmitBtn").addEventListener("click", submitAuth);
+}
+
+async function requestPasswordReset(){
+  const email = document.getElementById("suEmail").value.trim().toLowerCase();
+  const msg = document.getElementById("authMsg");
+  if(!email){ msg.innerHTML = `<div class="msg-line err">Enter your email first, then choose Forgot password.</div>`; return; }
+  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: window.location.origin + window.location.pathname});
+  if(error){ msg.innerHTML = `<div class="msg-line err">Couldn't send a reset email — ${escapeHtml(error.message)}</div>`; return; }
+  msg.innerHTML = `<div class="msg-line ok">If that account exists, a password reset email has been sent.</div>`;
+}
+
+async function submitAuth(){
+  const email = document.getElementById("suEmail").value.trim().toLowerCase();
+  const password = document.getElementById("suPassword").value;
+  const msg = document.getElementById("authMsg");
+  if(!email || !password){ msg.innerHTML = `<div class="msg-line err">Please enter your email and password.</div>`; return; }
+  if(password.length < 6){ msg.innerHTML = `<div class="msg-line err">Your password must be at least 6 characters.</div>`; return; }
+
+  if(state.authMode === "create"){
+    const name = document.getElementById("suName").value.trim();
+    const town = document.getElementById("suTown").value;
+    if(!name || !town){ msg.innerHTML = `<div class="msg-line err">Please add your name and town.</div>`; return; }
+    savePersonal("pending-signup", {name, town});
+    const {data, error} = await sb.auth.signUp({
+      email, password,
+      options:{ emailRedirectTo: window.location.origin + window.location.pathname, data:{name, town} }
+    });
+    if(error){ msg.innerHTML = `<div class="msg-line err">Couldn't create that account — ${escapeHtml(error.message)}</div>`; return; }
+    if(data.session){ return; }
+    state.pendingEmail = email;
+    state.authStage = "sent";
+    renderMembersPanel();
+    return;
+  }
+
+  const {error} = await sb.auth.signInWithPassword({email, password});
+  if(error){ msg.innerHTML = `<div class="msg-line err">Couldn't sign in — ${escapeHtml(error.message)}</div>`; return; }
+}
+
+async function completeProfileWith(name, town){
+  const uid = state.session.user.id;
+  const email = state.session.user.email;
+  const {data, error} = await sb.from("members").insert({id:uid, email, name, town}).select("id,name,town,premium,premium_since,joined").single();
+  if(error){
+    console.error(error);
+    state.authStage = "completing";
+    return;
+  }
+  state.profile = {id:data.id, name:data.name, town:data.town, premium:!!data.premium, premiumSince:null, joined:new Date(data.joined).getTime()};
+  state.email = email;
+  state.savedFilters = []; state.notifications = [];
+  state.authStage = "idle";
+  state.signInReason = null;
+  savePersonal("pending-signup", null);
+  await loadAdminReport();
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  state.session=null; state.profile=null; state.email=null;
+  state.savedFilters=[]; state.notifications=[]; state.adminReport=null; state.savedRefs=[];
+  state.authStage="idle";
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>

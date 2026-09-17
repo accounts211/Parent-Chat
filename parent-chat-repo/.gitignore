@@ -1,0 +1,24 @@
+# Local project artifacts
+.DS_Store
+npm-debug.log*
+
+# Runtime/coverage output
+.coverage/
+coverage/
+
+# Local environment secrets and generated config
+.env
+.env.*
+!.env.example
+
+# iOS/Swift build output
+build/
+DerivedData/
+*.xcworkspace
+*.xcodeproj
+*.xcuserstate
+*.xcuserdatad
+
+# Node dependency metadata if generated later
+node_modules/
+package-lock.json
